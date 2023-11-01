@@ -68,4 +68,9 @@ app.post('/register', async (req, res) => {
     }
 });
 
+app.post('/logout', (req, res) => {
+    res.clearCookie('token');
+    res.status(200).json({ message: 'Log-out successful'});
+})
+
 app.listen(3000);

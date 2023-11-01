@@ -1,4 +1,19 @@
+import { useContext } from "react";
+import axios from "axios";
+import { UserContext } from "./UserContext";
+
 export default function Board() {
+    const { username, setUsername: setLoggedInUserName, setId} = useContext(UserContext);
+    const handleLogout = async() => {
+        try {
+            await axios.post('/logout');
+            setLoggedInUserName('');
+            setImmediate('');
+        } catch (error) {
+            console.error('Log-out failed', error);
+        }
+    }
+
     return (
         <div className="flex h-screen bg-blue-100">
             <div className="flex flex-col w-screen items-center">
@@ -15,8 +30,8 @@ export default function Board() {
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8">
                                 <path fillRule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clipRule="evenodd" />
                             </svg>
-                            <div>bilele123123</div>
-                            <button className="bg-red-100 p-2 m-2 rounded-xl">Sign Out</button>
+                            <div>{username}</div>
+                            <button className="bg-red-100 p-2 m-2 rounded-xl" onClick={handleLogout}>Sign Out</button>
                         </div>
                     </div>
 
