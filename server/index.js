@@ -36,26 +36,16 @@ app.get('/profile', (req, res) => {
     }
 });
 
-app.post('/login', async (req,res) => {
-    const {username, password, code} = req.body;
-    const foundUser =  await User.findOne({username});
-    if (foundUser) {
-        const passOk = bcrypt.compareSync(password, foundUser.password);
-        if (passOk) {
-            jwt.sign({ userId: foundUser._id, username }, jwtSecret, {}, (err, token) => {
-                res.cookie('token', token, { sameSite: 'none', secure: true }).json({
-                    id: foundUser._id,
-                });
-            });
-        }
-    }
-});
-
 app.post('/register', async (req, res) => {
     const { username, password, code } = req.body;
     try {
+        const existingUser = await User.findOne({ username });
+        if (existingUser) {
+            return res.status(400).json({ error: 'Username already taken' });
+        }
+
         const hashedPassword = bcrypt.hashSync(password, bcryptSalt);
-        const createdUser = await User.create({ username:username, password:hashedPassword, code });
+        const createdUser = await User.create({ username, password: hashedPassword, code });
         jwt.sign({ userId: createdUser._id, username }, jwtSecret, {}, (err, token) => {
             if (err) throw err;
             res.cookie('token', token, { sameSite: 'none', secure: true }).status(201).json({
@@ -63,9 +53,27 @@ app.post('/register', async (req, res) => {
             });
         });
     } catch (err) {
-        if (err) throw err;
-        res.status(500).json('error');
+        console.error(err);
+        res.status(500).json({ error: 'Internal server error' });
     }
+});
+
+app.post('/login', async (req,res) => {
+    const { username, password, code } = req.body;
+    const foundUser = await User.findOne({ username });
+
+    if (!foundUser) {
+        return res.status(401).json({ error: 'Username not found/Incorrect password' });
+    }
+    const passOk = bcrypt.compareSync(password, foundUser.password);
+    if (!passOk) {
+        return res.status(401).json({ error: 'Username not found/Incorrect password' });
+    }
+    jwt.sign({ userId: foundUser._id, username }, jwtSecret, {}, (err, token) => {
+        res.cookie('token', token, { sameSite: 'none', secure: true }).json({
+            id: foundUser._id,
+        });
+    });
 });
 
 app.post('/logout', (req, res) => {
