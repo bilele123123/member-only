@@ -59,7 +59,7 @@ export default function RegisterAndLoginForm() {
                     <input
                         value={code}
                         onChange={(ev) => setCode(ev.target.value)}
-                        type="password"
+                        type="text"
                         placeholder="secret code"
                         className={`block w-full rounded-sm p-2 mb-2 border ${error && 'border-red-500'}`}
                         onFocus={handleInputFocus}
