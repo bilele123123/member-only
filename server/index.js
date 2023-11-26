@@ -88,6 +88,57 @@ app.post('/login', async (req,res) => {
 app.post('/logout', (req, res) => {
     res.clearCookie('token');
     res.status(200).json({ message: 'Log-out successful'});
-})
+});
+
+/* 
+/validate-secret-code
+API endpoint to validate the secret code which users will enter. 
+Upon entering the correct code defined in the .env file, the user's privilege will change from 'Regular' to 'Special'.
+This endpoint is created to handle the feature of changing user's privilege on the messaging app's main page.
+This is so users can change their account privilege even after they've signed up. 
+*/
+app.post('/validate-secret-code', (req, res) => {
+    const { secretCode } = req.body;
+
+    try {
+        // Fetch the user based on the current token
+        const token = req.cookies?.token;
+        if (!token) {
+            return res.status(401).json({ error: 'Invalid cookie token session' });
+        }
+
+        jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+            if (err) {
+                return res.status(401).json({ error: 'Invalid token' });
+            }
+
+            const { userId } = userData;
+
+            // Fetch user from database
+            const user = await User.findById(userId);
+
+            // Check if the user exists in the database
+            if (!user) {
+                return res.status(401).json({ error: 'User not found' });
+            }
+
+            // Validate the secret code that the user will enter
+            if (secretCode === ADMIN_CODE) {
+                user.role = 'admin';
+            } else {
+                user.role = 'user';
+            }
+
+            // Save the changes
+            await user.save();
+
+            // Respond with the updated role
+            res.json({ role: user.role });
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Internal sever error' });
+    }
+});
 
 app.listen(3000);
